@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Pinned signing authorities and trust policy for Retro Games Mobile catalogs.">
+  <title>Catalog trust · Retro Games Mobile</title>
+  <link rel="stylesheet" href="/rgm-site/assets/styles.css">
+</head>
+<body>
+  <header class="site-header"><div class="header-inner">
+    <a class="wordmark" href="/rgm-site/">Retro Games Mobile</a>
+    <nav aria-label="Main navigation"><a href="/rgm-site/review/">Review guide</a><a href="/rgm-site/trust/" aria-current="page">Catalog trust</a><a href="/rgm-site/privacy/">Privacy</a></nav>
+  </div></header>
+  <main class="page">
+    <p class="kicker">RGM catalog authority</p>
+    <h1>Catalog trust</h1>
+    <p class="lede">Any public HTTPS location may carry a catalog. Authority comes only from a globally pinned RGM Ed25519 key signing its exact index bytes.</p>
+
+    <h2>Active signing key</h2>
+    <dl class="facts">
+      <div class="fact"><dt>Key ID</dt><dd><code>rgm-catalog-2026-01</code></dd></div>
+      <div class="fact"><dt>Algorithm</dt><dd>Ed25519, raw 32-byte public key</dd></div>
+      <div class="fact"><dt>Signature prefix</dt><dd>None</dd></div>
+    </dl>
+    <p><a href="catalog-keys.json">Download the machine-readable public-key document</a>.</p>
+
+    <h2>Verification policy</h2>
+    <ol>
+      <li>Require the exact public HTTPS URL bound into the app.</li>
+      <li>Fetch <code>index.json</code> and its sibling <code>index.signatures.json</code>.</li>
+      <li>Verify a signature over the exact index bytes against the app's global RGM key set.</li>
+      <li>Bind the exact catalog version, index hash, envelope hash, and key ID to each app release.</li>
+      <li>Reject a changed version or changed bytes at an accepted version.</li>
+      <li>Fetch same-origin content-addressed objects and verify signed byte sizes and SHA-256 hashes.</li>
+      <li>Activate a complete generation atomically; retain the last verified generation on failure.</li>
+    </ol>
+
+    <p>Current application releases accept only their exact bound catalog version. Retired release audit remains in reachable Git history and is not served by this site.</p>
+
+    <h2>Key rotation</h2>
+    <p>A client update may pin an old and a new public key concurrently. Feeds are then signed by both keys before a later client update removes the retired key. Private keys are kept outside source repositories and publication output.</p>
+    <footer><a href="/rgm-site/">Retro Games Mobile home</a></footer>
+  </main>
+</body>
+</html>

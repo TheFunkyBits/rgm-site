@@ -1,0 +1,61 @@
+name: Deploy prepared RGM site
+
+on:
+  workflow_dispatch:
+    inputs:
+      transaction-id:
+        description: Prepared publication transaction identifier
+        required: true
+        type: string
+      state-commit:
+        description: Exact rgm commit containing the prepared publication record
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact site commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Assemble prepared artifact
+        env:
+          STATE_COMMIT: ${{ inputs.state-commit }}
+          TRANSACTION_ID: ${{ inputs.transaction-id }}
+        run: >-
+          python .github/scripts/prepare_pages_artifact.py
+          --site-root .
+          --state-repository TheFunkyBits/rgm
+          --state-commit "$STATE_COMMIT"
+          --site-commit "$GITHUB_SHA"
+          --transaction-id "$TRANSACTION_ID"
+          --output "$RUNNER_TEMP/pages-artifact"
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/pages-artifact
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
