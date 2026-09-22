@@ -29,7 +29,9 @@ ARTIFACT_ROOT_ENTRIES = frozenset(
         "trust",
     },
 )
-REPOSITORY_METADATA_ENTRIES = frozenset({".git", ".github", ".gitignore", "AGENTS.md", "README.md"})
+REPOSITORY_METADATA_ENTRIES = frozenset(
+    {".git", ".github", ".gitattributes", ".gitignore", "AGENTS.md", "README.md"}
+)
 GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 TRANSACTION_ID = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 PREPARED_KIND = "rgm-site-prepared-publication"
@@ -45,6 +47,11 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def artifact_manifest_sha256(files: list[dict[str, object]]) -> str:
+    source = json.dumps(files, ensure_ascii=True, allow_nan=False, indent=2, sort_keys=True) + "\n"
+    return hashlib.sha256(source.encode("utf-8")).hexdigest()
 
 
 def require_file(path: Path, description: str) -> None:
@@ -84,18 +91,45 @@ def require_prepared_manifest(
     transaction_id: str,
     site_commit: str,
 ) -> list[dict[str, object]]:
+    if set(record) != {"schemaVersion", "kind", "transactionId", "predecessor", "state", "site", "artifact"}:
+        fail("Prepared state record has an invalid field set.")
     if record.get("schemaVersion") != 1 or record.get("kind") != PREPARED_KIND:
         fail("Prepared state record has an unsupported identity.")
     if record.get("transactionId") != transaction_id:
         fail("Prepared state record transaction identifier differs from the workflow input.")
+    predecessor = record.get("predecessor")
+    if not isinstance(predecessor, dict) or set(predecessor) != {"genesisSha256", "activeSha256"}:
+        fail("Prepared state record has an invalid predecessor binding.")
+    if not isinstance(predecessor["genesisSha256"], str) or not re.fullmatch(r"[0-9a-f]{64}", predecessor["genesisSha256"]):
+        fail("Prepared state record has an invalid genesis binding.")
+    if predecessor["activeSha256"] is not None and (
+        not isinstance(predecessor["activeSha256"], str)
+        or not re.fullmatch(r"[0-9a-f]{64}", predecessor["activeSha256"])
+    ):
+        fail("Prepared state record has an invalid active predecessor binding.")
+    state = record.get("state")
+    if not isinstance(state, dict) or set(state) != {"repository", "sourceCommit"}:
+        fail("Prepared state record is missing its state binding.")
+    if state.get("repository") != "TheFunkyBits/rgm" or not isinstance(state.get("sourceCommit"), str) or not GIT_SHA.fullmatch(state["sourceCommit"]):
+        fail("Prepared state record has an invalid state binding.")
     site = record.get("site")
     if not isinstance(site, dict):
         fail("Prepared state record is missing its site binding.")
-    if site.get("repository") != "TheFunkyBits/rgm-site" or site.get("commit") != site_commit:
+    if set(site) != {"repository", "parentCommit", "commit"}:
+        fail("Prepared state record has an invalid site binding.")
+    if (
+        site.get("repository") != "TheFunkyBits/rgm-site"
+        or site.get("commit") != site_commit
+        or not isinstance(site.get("parentCommit"), str)
+        or not GIT_SHA.fullmatch(site["parentCommit"])
+        or site["parentCommit"] == site_commit
+    ):
         fail("Prepared state record does not bind this exact rgm-site commit.")
     artifact = record.get("artifact")
-    if not isinstance(artifact, dict) or artifact.get("root") != ".":
+    if not isinstance(artifact, dict) or set(artifact) != {"root", "manifestSha256", "files"} or artifact.get("root") != ".":
         fail("Prepared state record has an invalid artifact root.")
+    if not isinstance(artifact["manifestSha256"], str) or not re.fullmatch(r"[0-9a-f]{64}", artifact["manifestSha256"]):
+        fail("Prepared state record has an invalid artifact manifest hash.")
     files = artifact.get("files")
     if not isinstance(files, list) or not files:
         fail("Prepared state record must contain a non-empty artifact file inventory.")
@@ -115,7 +149,11 @@ def require_prepared_manifest(
             fail(f"Prepared artifact inventory has an invalid SHA-256 for {path}.")
         paths.add(path)
         expected.append({"path": path, "bytes": byte_count, "sha256": digest})
-    return sorted(expected, key=lambda item: str(item["path"]))
+    if expected != sorted(expected, key=lambda item: str(item["path"])):
+        fail("Prepared artifact inventory must be sorted by path.")
+    if artifact["manifestSha256"] != artifact_manifest_sha256(expected):
+        fail("Prepared artifact manifest hash differs from its file inventory.")
+    return expected
 
 
 def collect_artifact_files(site_root: Path) -> list[Path]:

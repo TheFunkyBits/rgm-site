@@ -10,3 +10,7 @@ not a publication path after bootstrap.
 
 Historical catalog releases and catalog-v4 schemas are intentionally absent. They remain bound to
 their original `rgm` history and URLs until separately retired.
+
+Future split releases use root-level `catalog/vN/` artifacts and successor schema resources under
+`spec/catalog-v5/`. The workflow accepts only an exact prepared state record and matching site
+commit; it must not be dispatched for an arbitrary branch or local edit.
