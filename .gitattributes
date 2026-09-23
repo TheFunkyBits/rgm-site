@@ -3,3 +3,4 @@
 *.png binary
 *.zip binary
 *.mp4 binary
+catalog/v8/objects/sha256/* -text -eol
