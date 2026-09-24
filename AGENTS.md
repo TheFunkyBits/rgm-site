@@ -10,7 +10,7 @@ deployment receipts, publication locks, app snapshot tags, or publication-state 
 
 ## Publication
 
-`TheFunkyBits/rgm` is the state authority. Except for the recorded bootstrap commit, only the
+`TheFunkyBits/rgm-publication` is the state authority. Except for the recorded bootstrap commit, only the
 state-owned publisher may advance `main`. A Pages deployment must validate an exact prepared state
 record, exact site commit, and full artifact manifest before it uploads any files.
 

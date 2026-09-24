@@ -35,6 +35,14 @@ REPOSITORY_METADATA_ENTRIES = frozenset(
 GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 TRANSACTION_ID = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 PREPARED_KIND = "rgm-site-prepared-publication"
+STATE_REPOSITORY = "TheFunkyBits/rgm-publication"
+HISTORICAL_STATE_REPOSITORY = "TheFunkyBits/rgm"
+HISTORICAL_PREPARED_HASHES = {
+    "base-site-v16": "41aa74f1ddc9b770cf5241f68199fee4115f60330ba24bab02e7923b519f998c",
+    "base-site-v16-recovery-1": "798db9337c006931be20c0b16657bbb169db03ccbf8170f14ca1f3202ae3bc51",
+    "catalog-v7": "db80e63048b45150a4be1738156b2689956c51f9ae83817bfbb838a8bc5acf2d",
+    "catalog-v8": "4a0e2da12ce208c8da6390f77afa7399d67ac67c14233e08496f64aef60f16a2",
+}
 
 
 def fail(message: str) -> None:
@@ -93,7 +101,7 @@ def require_prepared_manifest(
 ) -> list[dict[str, object]]:
     if set(record) != {"schemaVersion", "kind", "transactionId", "predecessor", "state", "site", "artifact"}:
         fail("Prepared state record has an invalid field set.")
-    if record.get("schemaVersion") != 1 or record.get("kind") != PREPARED_KIND:
+    if record.get("schemaVersion") not in (1, 2) or record.get("kind") != PREPARED_KIND:
         fail("Prepared state record has an unsupported identity.")
     if record.get("transactionId") != transaction_id:
         fail("Prepared state record transaction identifier differs from the workflow input.")
@@ -110,8 +118,14 @@ def require_prepared_manifest(
     state = record.get("state")
     if not isinstance(state, dict) or set(state) != {"repository", "sourceCommit"}:
         fail("Prepared state record is missing its state binding.")
-    if state.get("repository") != "TheFunkyBits/rgm" or not isinstance(state.get("sourceCommit"), str) or not GIT_SHA.fullmatch(state["sourceCommit"]):
+    expected_state = HISTORICAL_STATE_REPOSITORY if record["schemaVersion"] == 1 else STATE_REPOSITORY
+    if (state.get("repository") != expected_state or
+        not isinstance(state.get("sourceCommit"), str) or not GIT_SHA.fullmatch(state["sourceCommit"])):
         fail("Prepared state record has an invalid state binding.")
+    if record["schemaVersion"] == 1:
+        canonical = (json.dumps(record, ensure_ascii=True, allow_nan=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
+        if hashlib.sha256(canonical).hexdigest() != HISTORICAL_PREPARED_HASHES.get(transaction_id):
+            fail("Prepared historical record is not one of the exact pre-rename publications.")
     site = record.get("site")
     if not isinstance(site, dict):
         fail("Prepared state record is missing its site binding.")
@@ -219,8 +233,8 @@ def main() -> int:
 
     site_root = arguments.site_root.resolve()
     output = arguments.output.resolve()
-    if arguments.state_repository != "TheFunkyBits/rgm":
-        fail("The deployment workflow accepts only the canonical rgm state repository.")
+    if arguments.state_repository != STATE_REPOSITORY:
+        fail("The deployment workflow accepts only the canonical rgm-publication state repository.")
     if not GIT_SHA.fullmatch(arguments.state_commit) or not GIT_SHA.fullmatch(arguments.site_commit):
         fail("State and site commits must be full lowercase Git SHA-1 values.")
     if not TRANSACTION_ID.fullmatch(arguments.transaction_id):

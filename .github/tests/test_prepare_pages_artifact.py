@@ -78,13 +78,34 @@ class PreparePagesArtifactTest(unittest.TestCase):
             self.run_assembler(record, output)
         self.assertFalse(output.exists())
 
+    def test_reads_exact_historical_v8_record_but_not_a_new_old_name_record(self) -> None:
+        container = Path(__file__).resolve().parents[3]
+        state = container / "rgm-publication"
+        if not state.is_dir():
+            state = container / "rgm"
+        record = json.loads((state / "site-publications/prepared/catalog-v8.json").read_bytes())
+        original = ASSEMBLER.require_prepared_manifest(record, "catalog-v8", record["site"]["commit"])
+        self.assertTrue(original)
+
+        forged = self.prepared_record()
+        forged["schemaVersion"] = 1
+        forged["state"]["repository"] = "TheFunkyBits/rgm"
+        with self.assertRaisesRegex(SystemExit, "Prepared historical record is not one of the exact"):
+            ASSEMBLER.require_prepared_manifest(forged, "site-v9", self.commit)
+
+    def test_refuses_old_state_repository_as_a_new_workflow_input(self) -> None:
+        output = self.root / "artifact"
+        with self.assertRaisesRegex(SystemExit, "only the canonical rgm-publication"):
+            self.run_assembler(self.prepared_record(), output, repository="TheFunkyBits/rgm")
+        self.assertFalse(output.exists())
+
     def prepared_record(self) -> dict:
         return {
-            "schemaVersion": 1,
+            "schemaVersion": 2,
             "kind": "rgm-site-prepared-publication",
-            "transactionId": "site-v7",
+            "transactionId": "site-v9",
             "predecessor": {"genesisSha256": "a" * 64, "activeSha256": None},
-            "state": {"repository": "TheFunkyBits/rgm", "sourceCommit": "b" * 40},
+            "state": {"repository": "TheFunkyBits/rgm-publication", "sourceCommit": "b" * 40},
             "site": {
                 "repository": "TheFunkyBits/rgm-site",
                 "parentCommit": "d" * 40,
@@ -97,20 +118,20 @@ class PreparePagesArtifactTest(unittest.TestCase):
             },
         }
 
-    def run_assembler(self, record: dict, output: Path) -> None:
+    def run_assembler(self, record: dict, output: Path, *, repository: str = "TheFunkyBits/rgm-publication") -> None:
         response = FakeResponse(json.dumps(record).encode("utf-8"))
         arguments = [
             str(MODULE_PATH),
             "--site-root",
             str(self.site),
             "--state-repository",
-            "TheFunkyBits/rgm",
+            repository,
             "--state-commit",
             "d" * 40,
             "--site-commit",
             self.commit,
             "--transaction-id",
-            "site-v7",
+            "site-v9",
             "--output",
             str(output),
         ]

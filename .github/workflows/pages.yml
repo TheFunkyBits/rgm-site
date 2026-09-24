@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       state-commit:
-        description: Exact rgm commit containing the prepared publication record
+        description: Exact rgm-publication commit containing the prepared publication record
         required: true
         type: string
 
@@ -42,7 +42,7 @@ jobs:
         run: >-
           python .github/scripts/prepare_pages_artifact.py
           --site-root .
-          --state-repository TheFunkyBits/rgm
+          --state-repository TheFunkyBits/rgm-publication
           --state-commit "$STATE_COMMIT"
           --site-commit "$GITHUB_SHA"
           --transaction-id "$TRANSACTION_ID"
