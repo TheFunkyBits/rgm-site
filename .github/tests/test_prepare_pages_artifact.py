@@ -69,6 +69,57 @@ class PreparePagesArtifactTest(unittest.TestCase):
             sorted(path.relative_to(output).as_posix() for path in output.rglob("*") if path.is_file()),
         )
 
+    def test_materializes_committed_lf_bytes_from_a_clean_crlf_checkout(self) -> None:
+        self.git_command("config", "core.autocrlf", "true")
+        committed = subprocess.check_output([self.git, "-C", self.site, "show", "HEAD:index.html"])
+        self.write(self.site / "index.html", committed.replace(b"\n", b"\r\n"))
+        self.git_command("add", "--", "index.html")
+        self.assertEqual("", self.git_text("status", "--porcelain=v1"))
+        output = self.root / "artifact"
+
+        self.run_assembler(self.prepared_record(), output)
+
+        self.assertNotEqual(committed, (self.site / "index.html").read_bytes())
+        self.assertEqual(committed, (output / "index.html").read_bytes())
+        self.assertEqual(self.files, ASSEMBLER.observed_manifest(output, ASSEMBLER.collect_artifact_files(output)))
+
+    def test_preserves_binary_crlf_catalog_object_from_committed_blob(self) -> None:
+        catalog_object = "catalog/v9/objects/sha256/" + "a" * 64
+        signed_bytes = b"signed payload\r\n"
+        self.write(self.site / ".gitattributes", b"* text=auto eol=lf\ncatalog/v9/objects/sha256/* -text -eol\n")
+        self.write(self.site / catalog_object, signed_bytes)
+        self.git_command("add", ".")
+        self.git_command("commit", "-m", "add byte-stable catalog object")
+        self.commit = self.git_text("rev-parse", "HEAD")
+        self.files = ASSEMBLER.observed_manifest(self.site, ASSEMBLER.collect_artifact_files(self.site))
+
+        output = self.root / "artifact"
+        self.run_assembler(self.prepared_record(), output)
+
+        self.assertEqual(signed_bytes, (output / catalog_object).read_bytes())
+        self.assertEqual(signed_bytes, subprocess.check_output([self.git, "-C", self.site, "show", f"HEAD:{catalog_object}"]))
+
+    def test_refuses_worktree_derived_manifest_that_disagrees_with_committed_blob(self) -> None:
+        committed = (self.site / "index.html").read_bytes()
+        self.write(self.site / "index.html", committed.replace(b"\n", b"\r\n"))
+        record = self.prepared_record()
+        record["artifact"]["files"] = ASSEMBLER.observed_manifest(
+            self.site, ASSEMBLER.collect_artifact_files(self.site),
+        )
+        record["artifact"]["manifestSha256"] = ASSEMBLER.artifact_manifest_sha256(record["artifact"]["files"])
+        output = self.root / "artifact"
+
+        with self.assertRaisesRegex(SystemExit, "exact committed site blobs: index.html"):
+            self.run_assembler(record, output)
+
+        self.assertFalse(output.exists())
+
+    def test_rejects_nonregular_committed_artifact_modes(self) -> None:
+        entry = b"120000 blob " + b"a" * 40 + b"\tindex.html\0"
+        with mock.patch.object(ASSEMBLER, "git_bytes", return_value=entry):
+            with self.assertRaisesRegex(SystemExit, "not a regular file: index.html"):
+                ASSEMBLER.committed_artifact_paths(self.site, self.commit)
+
     def test_refuses_a_prepared_record_for_another_site_commit(self) -> None:
         output = self.root / "artifact"
         record = self.prepared_record()
@@ -78,14 +129,14 @@ class PreparePagesArtifactTest(unittest.TestCase):
             self.run_assembler(record, output)
         self.assertFalse(output.exists())
 
-    def test_reads_exact_historical_v8_record_but_not_a_new_old_name_record(self) -> None:
+    def test_reads_exact_historical_v7_v8_records_but_not_a_new_old_name_record(self) -> None:
         container = Path(__file__).resolve().parents[3]
-        state = container / "rgm-publication"
-        if not state.is_dir():
-            state = container / "rgm"
-        record = json.loads((state / "site-publications/prepared/catalog-v8.json").read_bytes())
-        original = ASSEMBLER.require_prepared_manifest(record, "catalog-v8", record["site"]["commit"])
-        self.assertTrue(original)
+        state = container / "publication"
+        for version in (7, 8):
+            with self.subTest(version=version):
+                record = json.loads((state / f"site-publications/prepared/catalog-v{version}.json").read_bytes())
+                original = ASSEMBLER.require_prepared_manifest(record, f"catalog-v{version}", record["site"]["commit"])
+                self.assertTrue(original)
 
         forged = self.prepared_record()
         forged["schemaVersion"] = 1

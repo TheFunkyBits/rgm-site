@@ -6,11 +6,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -71,7 +73,10 @@ def require_safe_artifact_path(value: object) -> str:
     if not isinstance(value, str):
         fail("Prepared artifact path must be a string.")
     path = PurePosixPath(value)
-    if not value or path.is_absolute() or ".." in path.parts or path.parts[0] not in ARTIFACT_ROOT_ENTRIES:
+    if (
+        not value or "\\" in value or path.as_posix() != value or path.is_absolute()
+        or ".." in path.parts or path.parts[0] not in ARTIFACT_ROOT_ENTRIES
+    ):
         fail(f"Prepared artifact path is outside the public allowlist: {value!r}")
     return value
 
@@ -221,6 +226,42 @@ def checked_out_commit(site_root: Path) -> str:
     return result.stdout.strip()
 
 
+def git_bytes(site_root: Path, *arguments: str) -> bytes:
+    result = subprocess.run(
+        ["git", "-C", str(site_root), *arguments],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode != 0:
+        fail(f"Cannot read committed site bytes: {result.stderr.decode('utf-8', errors='replace').strip()}")
+    return result.stdout
+
+
+def committed_artifact_paths(site_root: Path, commit: str) -> list[str]:
+    paths: list[str] = []
+    for entry in git_bytes(site_root, "ls-tree", "-r", "--full-tree", "-z", commit).split(b"\0"):
+        if not entry:
+            continue
+        metadata, separator, raw_path = entry.partition(b"\t")
+        fields = metadata.split(b" ")
+        if not separator or len(fields) != 3:
+            fail("Committed site tree contains an invalid entry.")
+        try:
+            path = raw_path.decode("utf-8")
+        except UnicodeDecodeError:
+            fail("Committed site tree contains a non-UTF-8 path.")
+        if path.split("/", 1)[0] in REPOSITORY_METADATA_ENTRIES:
+            continue
+        require_safe_artifact_path(path)
+        if fields[0] not in (b"100644", b"100755") or fields[1] != b"blob":
+            fail(f"Committed site artifact is not a regular file: {path}")
+        paths.append(path)
+    if not paths:
+        fail("Committed site artifact is empty.")
+    return sorted(paths)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--site-root", required=True, type=Path)
@@ -241,23 +282,35 @@ def main() -> int:
         fail("Transaction identifier is invalid.")
     if not site_root.is_dir() or site_root.is_symlink():
         fail(f"Site root must be a real directory: {site_root}")
-    if output.exists():
+    if output.exists() or output.is_symlink():
         fail(f"Pages artifact output already exists: {output}")
     if checked_out_commit(site_root) != arguments.site_commit:
         fail("Checked-out site commit differs from the workflow commit.")
 
     prepared = read_prepared_record(arguments.state_repository, arguments.state_commit, arguments.transaction_id)
     expected = require_prepared_manifest(prepared, arguments.transaction_id, arguments.site_commit)
-    source_files = collect_artifact_files(site_root)
-    observed = observed_manifest(site_root, source_files)
-    if observed != expected:
-        fail("Prepared artifact inventory differs from the exact site worktree.")
+    paths = committed_artifact_paths(site_root, arguments.site_commit)
+    checkout_paths = sorted(file.relative_to(site_root).as_posix() for file in collect_artifact_files(site_root))
+    if paths != checkout_paths:
+        fail("Committed site artifact file inventory differs from the checkout.")
 
-    output.mkdir(parents=True)
-    for source in source_files:
-        destination = output / source.relative_to(site_root)
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(source, destination)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix=f".{output.name}.", dir=output.parent))
+    try:
+        for path in paths:
+            destination = staging / path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(git_bytes(site_root, "show", f"{arguments.site_commit}:{path}"))
+        observed = observed_manifest(staging, collect_artifact_files(staging))
+        if observed != expected:
+            mismatch = next((a["path"] for a, b in zip(observed, expected) if a != b), paths[-1])
+            fail(f"Prepared artifact inventory differs from exact committed site blobs: {mismatch}")
+        if output.exists() or output.is_symlink():
+            fail(f"Pages artifact output already exists: {output}")
+        os.replace(staging, output)
+    finally:
+        if staging.exists():
+            shutil.rmtree(staging)
     print(json.dumps({"fileCount": len(observed), "siteCommit": arguments.site_commit, "transactionId": arguments.transaction_id}, sort_keys=True))
     return 0
 
