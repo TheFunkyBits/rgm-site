@@ -4,3 +4,4 @@
 *.zip binary
 *.mp4 binary
 catalog/v8/objects/sha256/* -text -eol
+catalog/v9/objects/sha256/* -text -eol
