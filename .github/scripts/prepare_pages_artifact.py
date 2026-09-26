@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 import hashlib
 import json
 import os
@@ -14,7 +16,8 @@ import subprocess
 import sys
 import tempfile
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.parse import urlencode
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 
 ARTIFACT_ROOT_ENTRIES = frozenset(
@@ -38,13 +41,25 @@ GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 TRANSACTION_ID = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 PREPARED_KIND = "rgm-site-prepared-publication"
 STATE_REPOSITORY = "TheFunkyBits/rgm-publication"
-HISTORICAL_STATE_REPOSITORY = "TheFunkyBits/rgm"
-HISTORICAL_PREPARED_HASHES = {
-    "base-site-v16": "41aa74f1ddc9b770cf5241f68199fee4115f60330ba24bab02e7923b519f998c",
-    "base-site-v16-recovery-1": "798db9337c006931be20c0b16657bbb169db03ccbf8170f14ca1f3202ae3bc51",
-    "catalog-v7": "db80e63048b45150a4be1738156b2689956c51f9ae83817bfbb838a8bc5acf2d",
-    "catalog-v8": "4a0e2da12ce208c8da6390f77afa7399d67ac67c14233e08496f64aef60f16a2",
-}
+MAX_PREPARED_RECORD_BYTES = 1024 * 1024
+
+
+class RejectRedirects(HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, message, headers, new_url):
+        return None
+
+
+def strict_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for name, value in pairs:
+        if name in result:
+            raise ValueError(f"Duplicate prepared JSON key: {name}")
+        result[name] = value
+    return result
+
+
+def reject_constant(value: str) -> None:
+    raise ValueError(f"Non-finite prepared JSON number: {value}")
 
 
 def fail(message: str) -> None:
@@ -82,18 +97,58 @@ def require_safe_artifact_path(value: object) -> str:
 
 
 def read_prepared_record(repository: str, state_commit: str, transaction_id: str) -> dict[str, object]:
+    if (repository != STATE_REPOSITORY or not GIT_SHA.fullmatch(state_commit)
+        or not TRANSACTION_ID.fullmatch(transaction_id)):
+        fail("Prepared state record selection is invalid.")
+    token = os.environ.get("RGM_STATE_READ_TOKEN")
+    if not token or any(character.isspace() or not character.isprintable() for character in token):
+        fail("Publication read token is unavailable.")
+    path = f"site-publications/prepared/{transaction_id}.json"
     url = (
-        f"https://raw.githubusercontent.com/{repository}/{state_commit}/"
-        f"site-publications/prepared/{transaction_id}.json"
+        f"https://api.github.com/repos/{repository}/contents/{path}?{urlencode({'ref': state_commit})}"
     )
-    request = Request(url, headers={"Accept": "application/json", "User-Agent": "rgm-site-pages"})
+    request = Request(
+        url,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "rgm-site-pages",
+        },
+    )
     try:
-        with urlopen(request, timeout=20) as response:
-            document = json.loads(response.read().decode("utf-8"))
+        with build_opener(RejectRedirects()).open(request, timeout=20) as response:
+            if response.status != 200 or response.geturl() != url:
+                fail("Prepared state API response is invalid.")
+            raw = response.read(MAX_PREPARED_RECORD_BYTES * 2 + 1)
+        if len(raw) > MAX_PREPARED_RECORD_BYTES * 2:
+            fail("Prepared state API response is invalid.")
+        metadata = json.loads(raw.decode("utf-8"), object_pairs_hook=strict_object, parse_constant=reject_constant)
     except HTTPError as error:
-        fail(f"Prepared state record is unavailable ({error.code}): {url}")
-    except (URLError, UnicodeDecodeError, json.JSONDecodeError) as error:
-        fail(f"Prepared state record is invalid: {error}")
+        fail(f"Prepared state record is unavailable ({error.code}).")
+    except (URLError, OSError, UnicodeDecodeError, ValueError):
+        fail("Prepared state API response is invalid.")
+    if (not isinstance(metadata, dict) or metadata.get("type") != "file"
+        or metadata.get("name") != f"{transaction_id}.json" or metadata.get("path") != path
+        or metadata.get("url") != url or metadata.get("encoding") != "base64"
+        or type(metadata.get("size")) is not int
+        or not 0 < metadata["size"] <= MAX_PREPARED_RECORD_BYTES
+        or not isinstance(metadata.get("sha"), str) or not GIT_SHA.fullmatch(metadata["sha"])
+        or not isinstance(metadata.get("content"), str)):
+        fail("Prepared state API response is invalid.")
+    encoded = metadata["content"].replace("\n", "")
+    try:
+        source = base64.b64decode(encoded, validate=True)
+    except (binascii.Error, ValueError):
+        fail("Prepared state API response is invalid.")
+    blob = b"blob " + str(len(source)).encode("ascii") + b"\0" + source
+    if (len(source) != metadata["size"] or base64.b64encode(source).decode("ascii") != encoded
+        or hashlib.sha1(blob).hexdigest() != metadata["sha"]):
+        fail("Prepared state API response is invalid.")
+    try:
+        document = json.loads(source.decode("utf-8"), object_pairs_hook=strict_object, parse_constant=reject_constant)
+    except (UnicodeDecodeError, ValueError):
+        fail("Prepared state record is invalid.")
     if not isinstance(document, dict):
         fail("Prepared state record must be a JSON object.")
     return document
@@ -104,9 +159,9 @@ def require_prepared_manifest(
     transaction_id: str,
     site_commit: str,
 ) -> list[dict[str, object]]:
-    if set(record) != {"schemaVersion", "kind", "transactionId", "predecessor", "state", "site", "artifact"}:
+    if set(record) != {"kind", "transactionId", "predecessor", "state", "site", "artifact"}:
         fail("Prepared state record has an invalid field set.")
-    if record.get("schemaVersion") not in (1, 2) or record.get("kind") != PREPARED_KIND:
+    if record.get("kind") != PREPARED_KIND:
         fail("Prepared state record has an unsupported identity.")
     if record.get("transactionId") != transaction_id:
         fail("Prepared state record transaction identifier differs from the workflow input.")
@@ -123,14 +178,9 @@ def require_prepared_manifest(
     state = record.get("state")
     if not isinstance(state, dict) or set(state) != {"repository", "sourceCommit"}:
         fail("Prepared state record is missing its state binding.")
-    expected_state = HISTORICAL_STATE_REPOSITORY if record["schemaVersion"] == 1 else STATE_REPOSITORY
-    if (state.get("repository") != expected_state or
+    if (state.get("repository") != STATE_REPOSITORY or
         not isinstance(state.get("sourceCommit"), str) or not GIT_SHA.fullmatch(state["sourceCommit"])):
         fail("Prepared state record has an invalid state binding.")
-    if record["schemaVersion"] == 1:
-        canonical = (json.dumps(record, ensure_ascii=True, allow_nan=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
-        if hashlib.sha256(canonical).hexdigest() != HISTORICAL_PREPARED_HASHES.get(transaction_id):
-            fail("Prepared historical record is not one of the exact pre-rename publications.")
     site = record.get("site")
     if not isinstance(site, dict):
         fail("Prepared state record is missing its site binding.")
@@ -155,14 +205,14 @@ def require_prepared_manifest(
     expected: list[dict[str, object]] = []
     paths: set[str] = set()
     for item in files:
-        if not isinstance(item, dict):
-            fail("Prepared artifact inventory contains a non-object entry.")
+        if type(item) is not dict or set(item) != {"path", "bytes", "sha256"}:
+            fail("Prepared artifact inventory has invalid fields.")
         path = require_safe_artifact_path(item.get("path"))
         if path in paths:
             fail(f"Prepared artifact inventory duplicates {path}.")
         byte_count = item.get("bytes")
         digest = item.get("sha256")
-        if not isinstance(byte_count, int) or byte_count < 0:
+        if type(byte_count) is not int or byte_count < 0:
             fail(f"Prepared artifact inventory has an invalid byte count for {path}.")
         if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
             fail(f"Prepared artifact inventory has an invalid SHA-256 for {path}.")

@@ -29,16 +29,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Require canonical site main
+        if: github.ref != 'refs/heads/main' || github.repository != 'TheFunkyBits/rgm-site'
+        run: exit 1
+
       - name: Checkout exact site commit
         uses: actions/checkout@v4
         with:
           persist-credentials: false
           fetch-depth: 1
 
+      - name: Mint publication read token
+        id: publication-read
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          client-id: ${{ vars.RGM_PUBLICATION_READ_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RGM_PUBLICATION_READ_APP_PRIVATE_KEY }}
+          owner: TheFunkyBits
+          repositories: rgm-publication
+          permission-contents: read
+
       - name: Assemble prepared artifact
         env:
           STATE_COMMIT: ${{ inputs.state-commit }}
           TRANSACTION_ID: ${{ inputs.transaction-id }}
+          RGM_STATE_READ_TOKEN: ${{ steps.publication-read.outputs.token }}
         run: >-
           python .github/scripts/prepare_pages_artifact.py
           --site-root .
