@@ -8,9 +8,11 @@ Publication state, catalog version allocation, release records, and deployment r
 artifact bound to an exact prepared state record from that repository. Direct edits to `main` are
 not a publication path after bootstrap.
 
-Historical catalog releases and catalog-v4 schemas are intentionally absent. They remain bound to
-their original `rgm` history and URLs until separately retired.
+The older `/rgm/` catalog and catalog-v4 schema URLs remain in their original publication history;
+they are not copied here. The v8 and v9 catalog URLs and the previously published trust-key URL
+remain served here. Changes to served resources require their own site-publication transaction.
 
-Future split releases use root-level `catalog/vN/` artifacts and successor schema resources under
-`spec/catalog-v5/`. The workflow accepts only an exact prepared state record and matching site
-commit; it must not be dispatched for an arbitrary branch or local edit.
+New split releases use strict counter-free signed records under root-level `catalog/vN/`; they do
+not introduce another public JSON Schema. A new versionless trust-key resource needs its own
+authorized create-only site transaction. The workflow accepts only an exact prepared state record
+and matching site commit; it must not be dispatched for an arbitrary branch or local edit.

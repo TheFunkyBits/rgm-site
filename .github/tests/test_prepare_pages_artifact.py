@@ -162,7 +162,11 @@ class PreparePagesArtifactTest(unittest.TestCase):
         state = container / "publication"
         for version in (7, 8):
             with self.subTest(version=version):
-                record = json.loads((state / f"site-publications/prepared/catalog-v{version}.json").read_bytes())
+                path = f"site-publications/prepared/catalog-v{version}.json"
+                original = subprocess.check_output([
+                    self.git, "-C", state, "show", f"catalog-state-v7-final-served:{path}",
+                ]) if version == 7 else (state / path).read_bytes()
+                record = json.loads(original)
                 with self.assertRaisesRegex(SystemExit, "invalid field set"):
                     ASSEMBLER.require_prepared_manifest(record, f"catalog-v{version}", record["site"]["commit"])
 
