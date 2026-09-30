@@ -1,0 +1,74 @@
+name: Deploy versioned RGM catalog
+run-name: Deploy RGM catalog v${{ inputs['catalog-version'] }} (${{ inputs['site-commit'] }})
+
+on:
+  workflow_dispatch:
+    inputs:
+      site-commit:
+        description: Exact site main commit containing the new catalog version
+        required: true
+        type: string
+      catalog-version:
+        description: New unsigned catalog version greater than nine
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Require exact canonical site main commit
+        if: github.ref != 'refs/heads/main' || github.repository != 'TheFunkyBits/rgm-site' || github.sha != inputs['site-commit']
+        run: exit 1
+
+      - name: Checkout exact site commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Stage versioned Pages artifact
+        env:
+          CATALOG_VERSION: ${{ inputs['catalog-version'] }}
+        run: >-
+          python -B .github/scripts/assemble_versioned_pages.py
+          --site-root .
+          --site-commit "$GITHUB_SHA"
+          --catalog-version "$CATALOG_VERSION"
+          --output "$RUNNER_TEMP/pages-artifact"
+
+      - name: Confirm current site main before Pages upload
+        run: >-
+          python -B .github/scripts/require_current_site_main.py
+          --site-root . --site-commit "$GITHUB_SHA"
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/pages-artifact
+
+      - name: Confirm current site main before Pages deployment
+        run: >-
+          python -B .github/scripts/require_current_site_main.py
+          --site-root . --site-commit "$GITHUB_SHA"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

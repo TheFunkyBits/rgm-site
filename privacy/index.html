@@ -20,7 +20,7 @@
     <p>Retro Games Mobile is provided by The Funky Bits. The Android application <code>dev.thefunkybits.rgm</code> does not collect, sell, or share personal data. It has no account system, analytics, advertising, cloud synchronization, or application-operated server.</p>
 
     <h2>Catalog network requests</h2>
-    <p>RGM uses the internet to retrieve a version-bound public catalog index, detached signatures, adaptation and recognition data, and catalog media over HTTPS. The catalog is hosted on GitHub Pages. The app activates only the catalog whose exact index bytes match its built-in binding and whose signature verifies under the RGM public key pinned in the app.</p>
+    <p>RGM uses the internet to retrieve its version-bound public catalog, adaptation and recognition data, and media over HTTPS from GitHub Pages. Released clients using catalogs v8/v9 also retrieve their retained signature resources under the original contract. The replacement route is not yet active; successor clients use unsigned versioned catalogs with strict semantic validation, not artifact-authenticity checks.</p>
     <p>The catalog host, GitHub Pages, may receive ordinary request information such as your IP address, request time, requested path, and RGM version in the user-agent string. RGM does not add an account identifier, advertising identifier, selected game files, installed content, saves, settings, or play history to these requests. GitHub describes its processing in the <a href="https://docs.github.com/site-policy/privacy-policies/github-privacy-statement">GitHub Privacy Statement</a>.</p>
 
     <h2>Files you select</h2>
@@ -31,7 +31,7 @@
     <p>Verified catalog cache files, installed content, emulator configuration, local saves, settings, and play history remain on your device. RGM retains them until an applicable in-app removal or reset action, clearing app data, or uninstalling the app. RGM excludes its app-private data from Android backup and device transfer.</p>
 
     <h2>Security</h2>
-    <p>Catalog transport requires HTTPS. Catalog indexes are verified with pinned Ed25519 public keys before any downloaded metadata or media becomes active. Catalog files are checked against signed SHA-256 sizes and hashes, then stored in Android app-private storage. The last verified catalog remains available offline.</p>
+    <p>Catalog transport requires HTTPS and data stays in Android app-private storage. Released v8/v9 clients keep their original signature checks and immutable resources. Successor catalogs are unsigned; strict parsing, confined paths and atomic cache activation do not authenticate files. Offline successor cache data is unverified for authenticity. Optional RGM resource ceilings are absent, increasing exhaustion risk.</p>
 
     <h2>Notifications</h2>
     <p>RGM may request Android notification permission so it can report the result of a local installation after you leave the app. The notification is generated on your device and contains no advertising or remote tracking.</p>

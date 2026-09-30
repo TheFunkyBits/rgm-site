@@ -15,13 +15,13 @@
   <main class="page">
     <p class="kicker">Release review</p>
     <h1>Review guide</h1>
-    <p class="lede">Release candidates are verified against their immutable catalog and application receipts.</p>
+    <p class="lede">Catalog data and the Android app have separate review and release routes. A version or source tag is not proof of delivered files or passing tests.</p>
 
     <h2>Content and rights</h2>
     <p>Catalog downloads contain descriptions, media, recognition rules, and declarative adaptation data. They contain no executable or native code and cannot download an emulator Core. RGM does not download or distribute third-party game binaries.</p>
 
-    <h2>Catalog identity</h2>
-    <p>The app verifies exact catalog index bytes with its pinned Ed25519 key, verifies each object by size and SHA-256, and activates the result atomically.</p>
+    <h2>Catalog delivery</h2>
+    <p>Released v8/v9 clients retain their original signed catalog resources. The successor route is not yet active; new catalogs use unsigned versioned HTTPS data, strict semantic validation, confined paths and an atomic offline cache that does not establish authenticity. See <a href="/rgm-site/trust/">catalog delivery and limits of trust</a>.</p>
     <footer>Support: <a href="mailto:thefunkybits@gmail.com">thefunkybits@gmail.com</a></footer>
   </main>
 </body>
