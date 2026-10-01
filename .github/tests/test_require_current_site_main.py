@@ -74,9 +74,9 @@ class CurrentSiteMainTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "advanced"):
             self.check()
 
-    def test_versioned_pages_workflow_rechecks_remote_main_around_deployment(self) -> None:
+    def test_static_pages_workflow_rechecks_remote_main_around_deployment(self) -> None:
         workflows = MODULE.parents[1] / "workflows"
-        for name, stage in (("pages-versioned.yml", "Stage versioned Pages artifact"),):
+        for name, stage in (("pages.yml", "Stage intro and privacy artifact"),):
             with self.subTest(name=name):
                 workflow = (workflows / name).read_text(encoding="utf-8")
                 preflight = "python -B .github/scripts/require_current_site_main.py"

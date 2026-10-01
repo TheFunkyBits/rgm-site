@@ -1,11 +1,12 @@
 # Repository Agent Guidance
 
-Shared workspace policy: `../../.github/copilot-instructions.md`.
+This guide applies to this public repository, including standalone checkouts. Its ownership,
+validation and publication constraints do not require a private parent checkout.
 
 ## Scope
 
-This public repository owns only root-level, served RGM site artifacts and the workflow that deploys
-an authorized versioned catalog artifact. It does not own catalog requests, reservations, release records,
+This public repository owns only app intro/privacy, minimal local static resources and their
+authorized reviewed-commit Pages workflow. It does not own catalog requests, reservations, release records,
 deployment receipts, publication locks, app snapshot tags, or publication-state tooling.
 
 ## Publication
@@ -21,17 +22,20 @@ resources require their own authorized, create-only state-to-site publication tr
 the currently served v8/v9 catalog paths and old trust-key URL unchanged except through their
 separately authorized retirement and site-publication transactions.
 
-Keep served page copy focused on user-facing catalog, trust, and privacy facts; describe the
-downloaded adaptation data accurately without detailing internal content contracts.
+Keep page copy focused on the app and truthful privacy facts: adaptations/catalog are app-bound;
+images and explicit YouTube playback load directly from external providers. Never rehost media or
+add game files, Profiles, catalogs, remote embeds, tracking scripts or extra public pages.
 
-## Prospective successor catalogs
+## Static Pages Cutover
 
-The separate versioned workflow is dormant until coordinated owner-policy cutover and its
-tracked site marker. After cutover, new catalogs are unsigned, create-only versions advanced
-only through the tested publication-owned script and site-owned assembler; the paired
-`catalog-v<N>` content/site tags map versions to source commits, not exact served bytes.
-The retired signed writers are not a publication path. The versioned Pages gate rejects the
-still-absent marker; implementation and offline verification do not activate it. No interim catalog
-release may use an incomplete route before coordinated readiness and separate release approval.
-Inspection or a queued Pages job cannot justify a redispatch, overwrite, tag move, or old
-v8/v9/trust-URL edit. Historical release obligations and source/offer custody remain independent.
+The static workflow and `assemble_static_pages.py` require a reviewed clean main commit and
+tracked `.github/static-pages-cutover.json` with contract `rgm-static-pages-v1`. Check its current
+state; activation follows offline validation and owner readiness, not mere implementation. The artifact allowlist is intro/privacy plus
+explicit minimal resources; queued jobs recheck canonical main before upload and deployment.
+There is no new catalog writer/version/tag route. Removing hosted
+resources requires final-served/removed source anchors, explicit cutoff/window waiver, non-reuse
+and independent source/offer fulfilment; no marker, HTTP success or source tag authorizes deletion.
+
+The owner guarantees no old-app/external-catalog clients remain. The approved cutoff removes
+active/served legacy graphs and trust resources without a compatibility window; immutable Git
+history and independently required source/offer custody remain separate obligations.

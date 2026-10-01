@@ -1,15 +1,11 @@
-name: Deploy versioned RGM catalog
-run-name: Deploy RGM catalog v${{ inputs['catalog-version'] }} (${{ inputs['site-commit'] }})
+name: Deploy RGM static site
+run-name: Deploy RGM site (${{ inputs['site-commit'] }})
 
 on:
   workflow_dispatch:
     inputs:
       site-commit:
-        description: Exact site main commit containing the new catalog version
-        required: true
-        type: string
-      catalog-version:
-        description: New unsigned catalog version greater than nine
+        description: Reviewed site main commit containing only intro, privacy and static resources
         required: true
         type: string
 
@@ -28,27 +24,22 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - name: Require exact canonical site main commit
+      - name: Require reviewed canonical site main commit
         if: github.ref != 'refs/heads/main' || github.repository != 'TheFunkyBits/rgm-site' || github.sha != inputs['site-commit']
         run: exit 1
 
-      - name: Checkout exact site commit
+      - name: Checkout reviewed site commit
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: main
           persist-credentials: false
-          fetch-depth: 2
+          fetch-depth: 1
 
-      - name: Stage versioned Pages artifact
-        env:
-          CATALOG_VERSION: ${{ inputs['catalog-version'] }}
+      - name: Stage intro and privacy artifact
         run: >-
-          python -B .github/scripts/assemble_versioned_pages.py
-          --site-root .
-          --site-commit "$GITHUB_SHA"
-          --catalog-version "$CATALOG_VERSION"
+          python -B .github/scripts/assemble_static_pages.py
+          --site-root . --site-commit "$GITHUB_SHA"
           --output "$RUNNER_TEMP/pages-artifact"
 
       - name: Confirm current site main before Pages upload
