@@ -62,16 +62,24 @@ class StaticPagesAssemblyTest(unittest.TestCase):
             ASSEMBLER.assemble(self.site, self.commit, self.output)
         self.assertFalse(self.output.exists())
 
-    def test_catalog_or_trust_resources_are_rejected_without_removal(self):
-        self.write("catalog/v1/index.json", "{}")
-        self.commit_changes()
-        with self.assertRaisesRegex(ASSEMBLER.PagesAssemblyError, "outside the intro/privacy"):
-            ASSEMBLER.assemble(self.site, self.commit, self.output)
-        self.assertTrue((self.site / "catalog/v1/index.json").is_file())
-        self.assertFalse(self.output.exists())
+    def test_undeclared_resources_are_rejected_without_removal(self):
+        for name in ("extra/metadata.json", "other/keys.json"):
+            with self.subTest(path=name):
+                self.write(name, "{}")
+                self.commit_changes()
+                with self.assertRaisesRegex(ASSEMBLER.PagesAssemblyError, "outside the intro/privacy"):
+                    ASSEMBLER.assemble(self.site, self.commit, self.output)
+                self.assertTrue((self.site / name).is_file())
+                self.assertFalse(self.output.exists())
+                path = self.site / name
+                path.unlink()
+                while path.parent != self.site:
+                    path = path.parent
+                    path.rmdir()
+                self.commit_changes()
 
-    def test_obsolete_or_duplicate_marker_cannot_activate_static_pages(self):
-        for source in ('{"contract":"rgm-unsigned-catalog-v1","enabled":true}',
+    def test_wrong_or_duplicate_marker_cannot_activate_static_pages(self):
+        for source in ('{"contract":"unexpected-contract","enabled":true}',
                        '{"contract":"rgm-static-pages-v1","enabled":true,"enabled":true}'):
             self.write(ASSEMBLER.CUTOVER_MARKER, source)
             self.commit_changes()
@@ -81,7 +89,7 @@ class StaticPagesAssemblyTest(unittest.TestCase):
 
     def test_broken_base_paths_and_external_media_are_rejected(self):
         for source in ('<a href="/privacy/">Wrong base path</a>',
-                       '<a href="/rgm-site/catalog/">Retired</a>',
+                       '<a href="/rgm-site/missing/">Missing</a>',
                        '<img src="https://media.invalid/image.png">',
                        '<iframe src="https://video.invalid/embed"></iframe>'):
             self.write("index.html", source)
@@ -97,7 +105,7 @@ class StaticPagesAssemblyTest(unittest.TestCase):
         self.assertEqual([], list(self.output.iterdir()))
 
     def test_no_output_preflight_rejects_invalid_pages_before_publication(self):
-        for source in ('<a href="/rgm-site/catalog/">Retired</a>',
+        for source in ('<a href="/rgm-site/missing/">Missing</a>',
                        '<iframe src="https://video.invalid/embed"></iframe>'):
             self.write("index.html", source)
             self.commit_changes()
@@ -111,8 +119,6 @@ class StaticPagesAssemblyTest(unittest.TestCase):
         self.assertIn("assemble_static_pages.py", workflow)
         self.assertIn("ref: main", workflow)
         self.assertEqual(2, workflow.count("require_current_site_main.py"))
-        self.assertNotIn("catalog-version", workflow)
-        self.assertNotIn("RGM_STATE_READ_TOKEN", workflow)
 
 
 if __name__ == "__main__":

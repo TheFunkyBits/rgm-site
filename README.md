@@ -12,11 +12,9 @@ main before upload and deployment. The publication owner supplies separately aut
 `static_site_release.py begin/inspect/reconcile`, with durable intent before push/dispatch and
 read-only observation of root/privacy. No new catalog release versions or ordinary tags exist.
 
-The owner guarantees no legacy clients remain, so no compatibility-retention window is required. Complete
-final-served anchors, explicit cutoff/window waiver, affected-owner/URL inventory, independent
-source/offer custody and operational approval precede removal. Removed-state anchors follow
-the scripted deployment and retired-URL observation; they are not a circular deployment input.
-Neither readiness, tags nor successful HTTP responses attest bytes or authorize replay/deletion.
+Existing Git and retirement anchors remain immutable. Never reuse, redirect or republish retired
+URLs or versions. Independently required original source/offer custody and exact-scope external
+deletion approval remain separate from site deployment. Neither readiness, tags nor successful
+HTTP responses attest bytes or authorize replay/deletion.
 
-Offline checks: `python -B -m unittest discover -s .github/tests`. Git-native retirement custody and
-pages-only artifact validation are different checks; do not report the former as completed cutoff.
+Offline checks: `python -B -m unittest discover -s .github/tests`.

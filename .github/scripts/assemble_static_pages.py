@@ -130,7 +130,7 @@ def validate_page_content(root: Path, files: set[str]) -> None:
             if not relative or relative.endswith("/"):
                 relative += "index.html"
             if relative not in files:
-                raise PagesAssemblyError("Static page links to an absent or retired resource")
+                raise PagesAssemblyError("Static page links to an absent resource")
     css = (root / "assets/styles.css").read_text(encoding="utf-8")
     if re.search(r"@import|url\(\s*['\"]?(?:https?:|//|data:)", css, re.IGNORECASE):
         raise PagesAssemblyError("Site styles cannot fetch remote resources")

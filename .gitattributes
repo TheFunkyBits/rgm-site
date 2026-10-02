@@ -1,7 +1,3 @@
 *.png binary
 *.zip binary
 *.mp4 binary
-catalog/v8/** -text -eol
-catalog/v9/** -text -eol
-trust/catalog-keys.json -text -eol
-trust/keys.json -text -eol
