@@ -51,6 +51,13 @@ add game files, Profiles, catalogs, remote embeds, tracking scripts or extra pub
 
 ## Static Pages Contract
 
+Source style uses standalone public developer CLIs through local wrappers and target-owned
+`config/style.json`. Select absolute `RGM_DEV_ROOT` or wrapper `--dev-root`; it needs no private
+parent, Gradle build, copied engine or crossrepo import. Check acquires nothing; setup is explicit.
+Hosted configuration needs a reviewed full public dev SHA and separate Git/CI approval. Actual host
+passes require observed execution; hosted qualification is deliberately unrun for this rollout.
+Never bundle the developer checkout/cache into Pages or add it to app snapshot-tag membership.
+
 The static workflow and `assemble_static_pages.py` require a reviewed clean main commit and
 tracked `.github/static-pages-cutover.json` with contract `rgm-static-pages-v1`. Check its current
 state; activation follows offline validation and owner readiness, not mere implementation. The artifact allowlist is intro/privacy plus

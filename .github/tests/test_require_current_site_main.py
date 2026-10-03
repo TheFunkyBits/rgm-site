@@ -81,13 +81,21 @@ class CurrentSiteMainTest(unittest.TestCase):
                 workflow = (workflows / name).read_text(encoding="utf-8")
                 preflight = "python -B .github/scripts/require_current_site_main.py"
                 self.assertEqual(2, workflow.count(preflight))
-                self.assertLess(workflow.index(stage), workflow.index("Confirm current site main before Pages upload"))
-                self.assertLess(workflow.index("Confirm current site main before Pages upload"),
-                                workflow.index("Upload Pages artifact"))
-                self.assertLess(workflow.index("Upload Pages artifact"),
-                                workflow.index("Confirm current site main before Pages deployment"))
-                self.assertLess(workflow.index("Confirm current site main before Pages deployment"),
-                                workflow.index("Deploy to GitHub Pages"))
+                self.assertLess(
+                    workflow.index(stage), workflow.index("Confirm current site main before Pages upload")
+                )
+                self.assertLess(
+                    workflow.index("Confirm current site main before Pages upload"),
+                    workflow.index("Upload Pages artifact"),
+                )
+                self.assertLess(
+                    workflow.index("Upload Pages artifact"),
+                    workflow.index("Confirm current site main before Pages deployment"),
+                )
+                self.assertLess(
+                    workflow.index("Confirm current site main before Pages deployment"),
+                    workflow.index("Deploy to GitHub Pages"),
+                )
 
 
 if __name__ == "__main__":

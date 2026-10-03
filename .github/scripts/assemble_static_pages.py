@@ -32,9 +32,12 @@ class PagesAssemblyError(ValueError):
 
 def _regular(path: Path, *, directory: bool = False) -> None:
     info = os.lstat(path)
-    if (path.is_symlink() or path.resolve(strict=True) != path or
-            getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0) or
-            not (stat.S_ISDIR(info.st_mode) if directory else stat.S_ISREG(info.st_mode))):
+    if (
+        path.is_symlink()
+        or path.resolve(strict=True) != path
+        or getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+        or not (stat.S_ISDIR(info.st_mode) if directory else stat.S_ISREG(info.st_mode))
+    ):
         raise PagesAssemblyError("Site path is linked, noncanonical or nonregular")
 
 
@@ -57,8 +60,12 @@ def _unique(pairs: list[tuple[str, object]]) -> dict[str, object]:
 
 
 def artifact_path(value: str) -> bool:
-    if (not value or "\\" in value or ":" in value or
-            any(part in ("", ".", "..") for part in value.split("/"))):
+    if (
+        not value
+        or "\\" in value
+        or ":" in value
+        or any(part in ("", ".", "..") for part in value.split("/"))
+    ):
         raise PagesAssemblyError("Unsafe static site path")
     if value.split("/")[0] in METADATA_ROOTS:
         return False
@@ -139,10 +146,12 @@ def validate_page_content(root: Path, files: set[str]) -> None:
 def preflight(root: Path, expected_commit: str) -> list[str]:
     root = root.absolute()
     _regular(root, directory=True)
-    if (not COMMIT.fullmatch(expected_commit) or
-            git(root, "rev-parse", "HEAD").decode("ascii").strip() != expected_commit or
-            git(root, "symbolic-ref", "--quiet", "--short", "HEAD") != b"main\n" or
-            git(root, "status", "--porcelain=v1", "--untracked-files=all").strip()):
+    if (
+        not COMMIT.fullmatch(expected_commit)
+        or git(root, "rev-parse", "HEAD").decode("ascii").strip() != expected_commit
+        or git(root, "symbolic-ref", "--quiet", "--short", "HEAD") != b"main\n"
+        or git(root, "status", "--porcelain=v1", "--untracked-files=all").strip()
+    ):
         raise PagesAssemblyError("Static Pages needs the reviewed clean main commit")
     paths: set[str] = set()
     files: list[str] = []
@@ -152,7 +161,12 @@ def preflight(root: Path, expected_commit: str) -> list[str]:
         metadata, separator, encoded = record.partition(b"\t")
         fields = metadata.split()
         relative = encoded.decode("utf-8")
-        if not separator or len(fields) != 3 or fields[0] not in {b"100644", b"100755"} or fields[1] != b"blob":
+        if (
+            not separator
+            or len(fields) != 3
+            or fields[0] not in {b"100644", b"100755"}
+            or fields[1] != b"blob"
+        ):
             raise PagesAssemblyError("Site commit contains a nonregular entry")
         paths.add(relative)
         if artifact_path(relative):
@@ -162,8 +176,12 @@ def preflight(root: Path, expected_commit: str) -> list[str]:
     marker = root / CUTOVER_MARKER
     _regular(marker)
     value = json.loads(marker.read_text(encoding="utf-8"), object_pairs_hook=_unique)
-    if (type(value) is not dict or set(value) != {"contract", "enabled"} or
-            value["contract"] != CUTOVER_CONTRACT or value["enabled"] is not True):
+    if (
+        type(value) is not dict
+        or set(value) != {"contract", "enabled"}
+        or value["contract"] != CUTOVER_CONTRACT
+        or value["enabled"] is not True
+    ):
         raise PagesAssemblyError("Static Pages readiness is not approved")
     for relative in files:
         _regular(root / relative)
@@ -183,8 +201,12 @@ def assemble(root: Path, expected_commit: str, output: Path) -> int:
             destination = staging / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             with destination.open("xb") as writer:
-                result = subprocess.run([str(GIT), "-C", str(root), "show", f"{expected_commit}:{relative}"],
-                    stdout=writer, stderr=subprocess.PIPE, check=False)
+                result = subprocess.run(
+                    [str(GIT), "-C", str(root), "show", f"{expected_commit}:{relative}"],
+                    stdout=writer,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
             if result.returncode:
                 raise PagesAssemblyError("Cannot stage the reviewed site commit")
         validate_artifact(staging)
@@ -213,9 +235,14 @@ def main() -> int:
             if args.site_commit is None:
                 raise PagesAssemblyError("Reviewed site commit is required")
             files = preflight(args.site_root, args.site_commit)
-            result = {"status": "static-pages-ready", "fileCount": len(files)} if args.output is None else {
-                "status": "static-pages-staged", "fileCount": assemble(args.site_root, args.site_commit, args.output),
-            }
+            result = (
+                {"status": "static-pages-ready", "fileCount": len(files)}
+                if args.output is None
+                else {
+                    "status": "static-pages-staged",
+                    "fileCount": assemble(args.site_root, args.site_commit, args.output),
+                }
+            )
     except (OSError, ValueError) as error:
         print(f"Static Pages validation failed: {error}", file=sys.stderr)
         return 1

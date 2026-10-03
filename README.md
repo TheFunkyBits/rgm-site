@@ -1,5 +1,26 @@
 # RGM site deployment
 
+## Source Formatting
+
+Use Python 3.11+ to provision the pinned developer-only formatters, then apply and check authored text:
+
+Select the independent public developer checkout with absolute `RGM_DEV_ROOT` or `--dev-root`;
+an existing local sibling `dev` is supported without acquisition. The local wrappers pass target
+policy `config/style.json`, not copied engines or crossrepo imports. Reuse a qualified formatter
+cache. No private parent, Gradle build, publication or app snapshot-tag dependency is added.
+
+```text
+python -B .github/scripts/style_setup.py
+python -B .github/scripts/style.py apply
+python -B .github/scripts/style.py check
+```
+
+These source-only commands do not stage or deploy Pages. Hosted callers select reviewed public dev
+through `RGM_DEV_REVISION`; Windows/Linux qualification is deliberately unrun. Exactly one final logical newline is enforced while
+preserving meaningful whitespace, encoding and existing LF/CRLF. The contractually empty `.nojekyll`
+marker, original/retained material and generated outputs remain excluded. Inspect an unresolved
+transaction before replay; never delete its journal to force a run. Check never installs tools.
+
 The target deployment at `https://thefunkybits.github.io/rgm-site/` contains app intro, the existing
 privacy page and explicit minimal local resources. The app packages catalog/Resolve/Profile JSON;
 GOG images and user-initiated YouTube playback are external runtime references, never website assets.

@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "protectedPaths": {
+    "gradlew": "Original Gradle launcher",
+    "gradlew.bat": "Original Gradle launcher",
+    "gradle/wrapper/**": "Original Gradle wrapper inputs",
+    "LICENSE*": "Original legal material",
+    "NOTICE*": "Original legal material",
+    "TRADEMARK*": "Original legal material",
+    ".nojekyll": "Contractually empty Pages marker",
+    "**/src/test/resources/**": "Protected test fixtures",
+    "**/fixtures/**": "Protected test fixtures",
+    "titles/*/src/*/resources/**": "Protected Title resources and fixtures",
+    "provenance/**": "Original source custody",
+    "build/**": "Generated formatting/build outputs",
+    "**/build/**": "Generated build outputs"
+  },
+  "binaryExtensions": [
+    ".jar",
+    ".zip",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".ico",
+    ".woff",
+    ".woff2",
+    ".gam",
+    ".moo",
+    ".calibration"
+  ]
+}

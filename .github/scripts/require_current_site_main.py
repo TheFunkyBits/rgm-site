@@ -12,10 +12,12 @@ import sys
 
 
 COMMIT = re.compile(r"[0-9a-f]{40}\Z")
-CANONICAL_ORIGINS = frozenset({
-    b"https://github.com/TheFunkyBits/rgm-site\n",
-    b"https://github.com/TheFunkyBits/rgm-site.git\n",
-})
+CANONICAL_ORIGINS = frozenset(
+    {
+        b"https://github.com/TheFunkyBits/rgm-site\n",
+        b"https://github.com/TheFunkyBits/rgm-site.git\n",
+    }
+)
 
 
 def _process(arguments: list[str], *, cwd: Path) -> subprocess.CompletedProcess[bytes]:
@@ -24,9 +26,15 @@ def _process(arguments: list[str], *, cwd: Path) -> subprocess.CompletedProcess[
 
 def require_current_site_main(site: Path, git: Path, expected_commit: str, *, runner=_process) -> None:
     root = site.absolute()
-    if (not root.is_dir() or root.is_symlink() or root.resolve(strict=True) != root or
-            not git.is_absolute() or not git.is_file() or git.is_symlink() or
-            not COMMIT.fullmatch(expected_commit)):
+    if (
+        not root.is_dir()
+        or root.is_symlink()
+        or root.resolve(strict=True) != root
+        or not git.is_absolute()
+        or not git.is_file()
+        or git.is_symlink()
+        or not COMMIT.fullmatch(expected_commit)
+    ):
         raise ValueError("Site workflow needs a canonical checkout, Git executable and selected commit")
 
     def read(*arguments: str) -> bytes:
@@ -40,7 +48,8 @@ def require_current_site_main(site: Path, git: Path, expected_commit: str, *, ru
     if read("rev-parse", "--verify", "HEAD") != f"{expected_commit}\n".encode("ascii"):
         raise ValueError("Pages checkout is not the selected site commit")
     if read("ls-remote", "origin", "refs/heads/main") != (
-            f"{expected_commit}\trefs/heads/main\n".encode("ascii")):
+        f"{expected_commit}\trefs/heads/main\n".encode("ascii")
+    ):
         raise ValueError("Site remote main advanced; queued Pages deployment must stop")
 
 
@@ -53,8 +62,9 @@ def main(arguments: list[str] | None = None) -> int:
     try:
         if executable is None:
             raise ValueError("Git executable is unavailable")
-        require_current_site_main(options.site_root, Path(executable).resolve(strict=True),
-                                  options.site_commit)
+        require_current_site_main(
+            options.site_root, Path(executable).resolve(strict=True), options.site_commit
+        )
     except (OSError, ValueError) as error:
         print(f"Pages deployment preflight stopped: {error}", file=sys.stderr)
         return 1

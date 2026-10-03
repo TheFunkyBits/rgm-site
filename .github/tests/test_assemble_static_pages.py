@@ -39,8 +39,13 @@ class StaticPagesAssemblyTest(unittest.TestCase):
         path.write_text(source, encoding="utf-8")
 
     def git(self, *arguments):
-        return subprocess.run([ASSEMBLER.GIT, "-C", str(self.site), *arguments], check=True,
-            capture_output=True, text=True, encoding="utf-8").stdout
+        return subprocess.run(
+            [ASSEMBLER.GIT, "-C", str(self.site), *arguments],
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        ).stdout
 
     def commit_changes(self):
         self.git("add", ".")
@@ -49,8 +54,10 @@ class StaticPagesAssemblyTest(unittest.TestCase):
 
     def test_stages_exactly_intro_privacy_and_minimal_local_assets(self):
         self.assertEqual(4, ASSEMBLER.assemble(self.site, self.commit, self.output))
-        self.assertEqual(set(ASSEMBLER.REQUIRED_FILES),
-            {path.relative_to(self.output).as_posix() for path in self.output.rglob("*") if path.is_file()})
+        self.assertEqual(
+            set(ASSEMBLER.REQUIRED_FILES),
+            {path.relative_to(self.output).as_posix() for path in self.output.rglob("*") if path.is_file()},
+        )
         self.assertEqual("static-pages-valid", ASSEMBLER.validate_artifact(self.output)["status"])
         self.assertFalse((self.output / ".github").exists())
 
@@ -79,8 +86,10 @@ class StaticPagesAssemblyTest(unittest.TestCase):
                 self.commit_changes()
 
     def test_wrong_or_duplicate_marker_cannot_activate_static_pages(self):
-        for source in ('{"contract":"unexpected-contract","enabled":true}',
-                       '{"contract":"rgm-static-pages-v1","enabled":true,"enabled":true}'):
+        for source in (
+            '{"contract":"unexpected-contract","enabled":true}',
+            '{"contract":"rgm-static-pages-v1","enabled":true,"enabled":true}',
+        ):
             self.write(ASSEMBLER.CUTOVER_MARKER, source)
             self.commit_changes()
             with self.assertRaises(ASSEMBLER.PagesAssemblyError):
@@ -88,10 +97,12 @@ class StaticPagesAssemblyTest(unittest.TestCase):
             self.assertFalse(self.output.exists())
 
     def test_broken_base_paths_and_external_media_are_rejected(self):
-        for source in ('<a href="/privacy/">Wrong base path</a>',
-                       '<a href="/rgm-site/missing/">Missing</a>',
-                       '<img src="https://media.invalid/image.png">',
-                       '<iframe src="https://video.invalid/embed"></iframe>'):
+        for source in (
+            '<a href="/privacy/">Wrong base path</a>',
+            '<a href="/rgm-site/missing/">Missing</a>',
+            '<img src="https://media.invalid/image.png">',
+            '<iframe src="https://video.invalid/embed"></iframe>',
+        ):
             self.write("index.html", source)
             self.commit_changes()
             with self.assertRaises(ASSEMBLER.PagesAssemblyError):
@@ -105,8 +116,10 @@ class StaticPagesAssemblyTest(unittest.TestCase):
         self.assertEqual([], list(self.output.iterdir()))
 
     def test_no_output_preflight_rejects_invalid_pages_before_publication(self):
-        for source in ('<a href="/rgm-site/missing/">Missing</a>',
-                       '<iframe src="https://video.invalid/embed"></iframe>'):
+        for source in (
+            '<a href="/rgm-site/missing/">Missing</a>',
+            '<iframe src="https://video.invalid/embed"></iframe>',
+        ):
             self.write("index.html", source)
             self.commit_changes()
             with self.assertRaises(ASSEMBLER.PagesAssemblyError):

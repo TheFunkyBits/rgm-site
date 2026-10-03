@@ -1,0 +1,42 @@
+name: Source style
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: target
+          persist-credentials: false
+      - name: Require reviewed public developer revision
+        shell: pwsh
+        env:
+          RGM_DEV_REVISION: ${{ vars.RGM_DEV_REVISION }}
+        run: if ($env:RGM_DEV_REVISION -cnotmatch '^[0-9a-f]{40}$') { throw 'RGM_DEV_REVISION must be a reviewed full commit SHA' }
+      - name: Checkout public developer tooling
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: TheFunkyBits/rgm-dev
+          ref: ${{ vars.RGM_DEV_REVISION }}
+          path: rgm-dev
+          persist-credentials: false
+      - name: Check source style with reviewed developer tooling
+        uses: ./rgm-dev/actions/style
+        with:
+          target-root: target
+          tool-cache: ${{ runner.temp }}/rgm-style-tools
+          smoke-root: .github/tests
+          kotlin: "false"
