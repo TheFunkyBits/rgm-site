@@ -53,6 +53,9 @@ class StaticPagesAssemblyTest(unittest.TestCase):
         self.commit = self.git("rev-parse", "HEAD").strip()
 
     def test_stages_exactly_intro_privacy_and_minimal_local_assets(self):
+        self.write(".github/scripts/static_site_release.py", "pass\n")
+        self.write(".github/scripts/rgm_site_tools/__init__.py", "")
+        self.commit_changes()
         self.assertEqual(4, ASSEMBLER.assemble(self.site, self.commit, self.output))
         self.assertEqual(
             set(ASSEMBLER.REQUIRED_FILES),

@@ -5,9 +5,11 @@ validation and publication constraints do not require a private parent checkout.
 
 ## Scope
 
-This public repository owns only app intro/privacy, minimal local static resources and their
-authorized reviewed-commit Pages workflow. It does not own catalog requests, reservations, release records,
-deployment receipts, publication locks, app snapshot tags, or publication-state tooling.
+This public repository owns app intro/privacy, minimal local static resources, their
+authorized reviewed-commit Pages workflow and static-site publication/reconciliation tooling.
+Operator code lives under `.github/scripts`; private locks and durable operation controls live
+in Git administration, outside tracked source and served output. It does not own catalog requests,
+reservations, release records, deployment receipts or app snapshot tags.
 
 ## Current Contract Hygiene
 
@@ -37,9 +39,18 @@ those keep their owning approvals.
 
 ## Publication
 
-`TheFunkyBits/rgm-publication` is the state authority. Except for the recorded bootstrap commit, only the
-state-owned publisher may advance `main`. Publication remains blocked until coordinated owner-policy
-and executable-route verification, marker activation and distinct publication authorization.
+Use `.github/scripts/static_site_release.py` for `begin`, read-only `inspect` and narrowly
+pre-dispatch `reconcile`. Apart from the recorded bootstrap commit, remote `main` may advance only
+through this site-owned publisher for approved publication, or the tested
+`rgm-dev/scripts/git_workspace.py` route for separately approved, reviewed fast-forward source
+delivery. Source delivery commits/pushes only selected source and never dispatches Pages or uses
+publication tokens/readiness to imply deployment approval. Its private Git controls are separate
+from the site publisher's original records and must not overwrite them.
+The publisher selects a reviewed site commit/base on clean canonical main; record durable
+push/dispatch intent before mutation. Lost acknowledgements stop for inspection, never replay.
+Keep credentials and journals private and do not bundle them into Pages. Publication remains
+blocked until coordinated owner-policy and executable-route verification, marker activation
+and distinct publication authorization.
 
 Do not copy catalogs, Profiles, trust-key resources or retired URL-bound schemas into this tree.
 External catalog hosting is gone and all clients use embedded app data. The current allowlist
