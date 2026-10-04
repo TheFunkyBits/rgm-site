@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 
 MODULE = Path(__file__).parents[1] / "scripts/assemble_static_pages.py"
@@ -117,6 +118,20 @@ class StaticPagesAssemblyTest(unittest.TestCase):
         with self.assertRaises(ASSEMBLER.PagesAssemblyError):
             ASSEMBLER.assemble(self.site, self.commit, self.output)
         self.assertEqual([], list(self.output.iterdir()))
+
+    def test_publication_refuses_an_empty_destination_created_at_the_final_boundary(self):
+        publish = ASSEMBLER._publish_directory
+
+        def occupy(source, destination):
+            destination.mkdir()
+            publish(source, destination)
+
+        with mock.patch.object(ASSEMBLER, "_publish_directory", side_effect=occupy):
+            with self.assertRaises(FileExistsError):
+                ASSEMBLER.assemble(self.site, self.commit, self.output)
+        self.assertTrue(self.output.is_dir())
+        self.assertEqual([], list(self.output.iterdir()))
+        self.assertFalse(list(self.root.glob(".artifact.*")))
 
     def test_no_output_preflight_rejects_invalid_pages_before_publication(self):
         for source in (

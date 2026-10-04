@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
+import errno
 from html.parser import HTMLParser
 import json
 import os
@@ -212,11 +214,37 @@ def assemble(root: Path, expected_commit: str, output: Path) -> int:
         validate_artifact(staging)
         if os.path.lexists(output):
             raise PagesAssemblyError("Pages output became occupied")
-        os.rename(staging, output)
+        _publish_directory(staging, output)
     finally:
         if staging.exists():
             shutil.rmtree(staging)
     return len(files)
+
+
+def _publish_directory(source: Path, destination: Path) -> None:
+    parent = source.parent.resolve(strict=True)
+    if source.parent != parent or destination.parent != parent:
+        raise PagesAssemblyError("Pages publication requires canonical sibling paths")
+    _regular(source, directory=True)
+    if os.name == "nt":
+        os.rename(source, destination)
+        return
+    if not sys.platform.startswith("linux"):
+        raise OSError(errno.ENOTSUP, "create-only Pages publication is unsupported")
+    library = ctypes.CDLL(None, use_errno=True)
+    try:
+        rename = library.renameat2
+    except AttributeError as failure:
+        raise OSError(errno.ENOTSUP, "renameat2 is unavailable") from failure
+    rename.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
+    rename.restype = ctypes.c_int
+    descriptor = os.open(parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        if rename(descriptor, os.fsencode(source.name), descriptor, os.fsencode(destination.name), 1) != 0:
+            error = ctypes.get_errno()
+            raise OSError(error, os.strerror(error), str(destination))
+    finally:
+        os.close(descriptor)
 
 
 def main() -> int:

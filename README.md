@@ -46,6 +46,11 @@ provides separately authorized `begin`/`reconcile` and read-only `inspect`, with
 before push/dispatch and observation of root/privacy. It needs only this standalone checkout;
 operator code under `.github` is never served. No new catalog release versions or ordinary tags exist.
 
+Local assembly publishes only to an unused canonical sibling destination outside the checkout.
+The final move cannot replace even an empty directory created concurrently: Windows uses native
+no-replace rename and Linux uses `renameat2(RENAME_NOREPLACE)`. Unsupported primitives fail closed.
+Staging success is not publication authorization or delivered-content evidence.
+
 All operations take absolute `--site-root`, `--git` and the full `--site-commit`. Begin additionally
 selects `--site-base` and requires separately approved `--confirm-site=site-<commit>`; reconcile
 retains the original selection and requires its own confirmation. Mutations use private
@@ -60,3 +65,8 @@ deletion approval remain separate from site deployment. Neither readiness, tags 
 HTTP responses attest bytes or authorize replay/deletion.
 
 Offline checks: `python -B -m unittest discover -s .github/tests`.
+
+For editing tasks, run those checks only after all authorized edits across affected repositories
+are complete. Guidance-only changes use content/diff review without application builds/tests;
+see [AGENTS.md](AGENTS.md#verification-timing). Public Windows/Linux offline CI coverage remains
+a separately reviewed/pinned rollout; an Ubuntu Pages deployment job is not cross-host test evidence.
