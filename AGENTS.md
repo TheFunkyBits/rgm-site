@@ -42,8 +42,10 @@ those keep their owning approvals.
 Use `.github/scripts/static_site_release.py` for `begin`, read-only `inspect` and narrowly
 pre-dispatch `reconcile`. Apart from the recorded bootstrap commit, remote `main` may advance only
 through this site-owned publisher for approved publication, or the tested
-`rgm-dev/scripts/git_workspace.py` route for separately approved, reviewed fast-forward source
-delivery. Source delivery commits/pushes only selected source and never dispatches Pages or uses
+`rgm-dev/scripts/git_workspace.py` route for separately approved fast-forward source delivery,
+using either reviewed selections or a caller-owned policy with explicit all-current confirmation.
+Both retain exact captured scope and drift/refusal safeguards; neither is deployment approval.
+Source delivery commits/pushes only selected source and never dispatches Pages or uses
 publication tokens/readiness to imply deployment approval. Its private Git controls are separate
 from the site publisher's original records and must not overwrite them.
 The publisher selects a reviewed site commit/base on clean canonical main; record durable
