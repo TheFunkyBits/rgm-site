@@ -1,103 +1,74 @@
 # Repository Agent Guidance
 
-This guide applies to this public repository, including standalone checkouts. Its ownership,
-validation and publication constraints do not require a private parent checkout.
+This guide applies to standalone public site checkouts; no private parent policy is required.
+Read [README.md](README.md) before checks and its [Reviewed Publication](README.md#reviewed-publication)
+procedure before source delivery or publication. Links do not load instructions automatically.
 
 ## Scope
 
-This public repository owns app intro/privacy, minimal local static resources, their
-authorized reviewed-commit Pages workflow and static-site publication/reconciliation tooling.
-Operator code lives under `.github/scripts`; private locks and durable operation controls live
-in Git administration, outside tracked source and served output. It does not own catalog requests,
-reservations, release records, deployment receipts or app snapshot tags.
+Own app intro/privacy, minimal static resources, and reviewed-commit Pages publication/reconciliation.
+Operator scripts live under `.github/scripts`, excluded from Pages; private locks/journals stay in
+Git administration, outside tracked source and served output. This repository owns no catalog feed,
+allocation, release records, deployment receipts, or app snapshot tags.
 
-## Current Contract Hygiene
-
-Proactively hunt for and remove retired, obsolete, redundant, legacy and history-only material
-in the authorized resources/guidance and connected references before/during work and final review.
-Determine necessity from actual consumers, registrations, links and obligations, not age or
-keywords; a self-only test does not justify an unused helper. Remove complete unnecessary slices,
-including whole files. Do not keep tombstones, historical explanations, unused compatibility
-aliases, retired-name scanners/tests or active history archives solely to remember removed material.
-
-Existing Git history is the historical reference. Internal retirement needs no preservation
-commit, staging, new ref/tag, exact-byte check, receipt/attestation or archive prerequisite,
-regardless of committed, modified, untracked or newly created status. Lack of history is not a
-reason to commit or preserve obsolete internal work. Transfer useful current facts, rationale,
-approved goals and meaningful assertions first; preserve functionality and unrelated/concurrent edits.
-
-Scoped internal retirement needs no additional cleanup request. Obtain approval before crossing
-authorized repositories or artifact classes; no blanket sweep or silent deliverable expansion.
-Each candidate needs grounded removal, a specific current retention reason or an explicit blocker.
-Leave no known safely removable residue in scope and disclose unresolved dependencies.
-
-Preserve existing Git objects/refs/tags and independent legal/source/offer/observation custody,
-currently served/release-bound material, player data and unresolved operational inputs. Unused
-resources may be retired only without bypassing their actual publication/retention contracts.
-This rule authorizes no served-byte rewrite, deployment, external deletion or Git mutation;
-those keep their owning approvals.
+Keep page copy focused on the app and truthful privacy facts: catalog/adaptations are app-bound;
+images and explicit YouTube playback load directly from external providers. Never rehost media or
+add Title files, Profiles, catalogs, remote embeds, tracking scripts, or extra public pages. External
+catalog hosting is gone; do not restore schemas, compatibility archives, redirects, or retired URLs.
 
 ## Publication
 
-Use `.github/scripts/static_site_release.py` for `begin`, read-only `inspect` and narrowly
-pre-dispatch `reconcile`. Apart from the recorded bootstrap commit, remote `main` may advance only
-through this site-owned publisher for approved publication, or the tested
-`rgm-dev/scripts/git_workspace.py` route for separately approved fast-forward source delivery,
-using either reviewed selections or a caller-owned policy with explicit all-current confirmation.
-Both retain exact captured scope and drift/refusal safeguards; neither is deployment approval.
-Source delivery commits/pushes only selected source and never dispatches Pages or uses
-publication tokens/readiness to imply deployment approval. Its private Git controls are separate
-from the site publisher's original records and must not overwrite them.
-The publisher selects a reviewed site commit/base on clean canonical main; record durable
-push/dispatch intent before mutation. Lost acknowledgements stop for inspection, never replay.
-Keep credentials and journals private and do not bundle them into Pages. Publication remains
-blocked until coordinated owner-policy and executable-route verification, marker activation
-and distinct publication authorization.
+Use the owned publisher and separately approved fast-forward developer source-delivery route
+documented in README; no manual main-advance/deployment substitute. Source delivery dispatches
+no Pages job, changes no release/CI pins, and keeps its private controls separate from publisher
+records. Preserve the reviewed clean canonical-main selection, durable push/dispatch intent,
+branch-drift refusals, and the tracked cutover contract. Ambiguous outcomes stop for scripted
+inspection/reconciliation, never replay. Root/privacy availability is observed, not assumed.
 
-Do not copy catalogs, Profiles, trust-key resources or retired URL-bound schemas into this tree.
-External catalog hosting is gone and all clients use embedded app data. The current allowlist
-has no compatibility/archive resources; never recreate, redirect or reuse retired URLs.
-
-Keep page copy focused on the app and truthful privacy facts: adaptations/catalog are app-bound;
-images and explicit YouTube playback load directly from external providers. Never rehost media or
-add game files, Profiles, catalogs, remote embeds, tracking scripts or extra public pages.
+No app/static-site publication during coupled implementation. Coordinated policies, owner guidance,
+routes, and required offline checks must agree before readiness activation; publication then needs
+its own approval. A marker, HTTP success, or source tag is neither a passed check nor delivered-content
+identity. Preserve protected refs and independent source/offer custody; tags do not authorize external
+deletion. Static publication creates no catalog/app snapshot tags or release authority for another class.
 
 ## Verification Timing
 
-Complete all authorized edits for the current task across every affected repository before
-running any build or test command. While any authorized edit remains unfinished, do not launch
-Gradle configuration/dry-runs, compilation, `testClasses`, assemble/test tasks, filtered tests,
-Python unittest/pytest, native CTest or custom smoke checks. A narrow/focused check, `--tests`
-filter, finished file/module/repository or convenient prerequisite is not early-run permission.
-Do not split the task or relabel a build/test as preflight, validation or diagnostics to bypass this rule.
-During editing, use targeted reads, source analysis, existing diagnostics and normal Git diff review;
-prepare regression tests and the final verification commands without executing them.
+Finish all authorized edits across affected repositories before any build/test, including configuration,
+compile-only, filtered, or smoke checks; do not split/relabel work to bypass this. During editing use
+reads, source analysis, editor diagnostics, and normal diff review. Then run the smallest required
+checks, reuse valid unaffected evidence, and finish corrective edits before rerunning invalidated
+checks and dependency gates. Guidance-only work uses content/link/diff review; test-only requests
+with no planned edits may run directly. Required checks are not waived. Disclose an unavoidable
+higher-priority early gate's exact conflict and why read-only/editor diagnostics cannot satisfy it.
+Claim only observed results; keep unrun/failed/waived/passed outcomes distinct.
 
-After the edit phase, run the smallest required verification set, combining compatible tasks and
-serializing Gradle. Preserve valid unaffected evidence rather than repeat checks for freshness.
-If verification fails, retain the result, finish all related corrective edits, then rerun only
-invalidated checks and required dependency gates. This scheduling rule never waives required checks.
-Guidance-only changes use read-only content/diff review, not application builds/tests; expressly
-requested test-only work with no planned edits may proceed directly to verification.
+## Current Contract Hygiene
 
-Higher-priority mandatory validation remains binding. Before an unavoidable early executable
-gate, disclose the exact conflicting requirement and why read-only/editor diagnostics cannot
-satisfy it; never silently use a generic mandatory-check exception or claim this policy overrides
-agent instructions.
+The latest request controls scope. Implementation includes directly necessary code/tests/docs;
+guidance-only or comment-only work authorizes only those artifacts. Ask before expanding scope.
+Remove directly superseded material and repair connected references, not unrelated cleanup hunts.
+Preserve useful facts, current consumers, concurrent edits, served/release-bound material, protected
+Git objects/refs, and original custody. Use Git history, not tombstones/archives/preservation receipts.
+Git/CI changes, publication, device mutation, signing, capture, and destructive cleanup need their
+separate approvals; verification grants none. Keep release artifact classes and listing inputs separate.
 
 ## Static Pages Contract
 
-Source style uses standalone public developer CLIs through local wrappers and target-owned
-`config/style.json`. Select absolute `RGM_DEV_ROOT` or wrapper `--dev-root`; it needs no private
-parent, Gradle build, copied engine or crossrepo import. Check acquires nothing; setup is explicit.
-Hosted configuration needs a reviewed full public dev SHA and separate Git/CI approval. Actual host
-passes require observed execution; hosted qualification is deliberately unrun for this rollout.
-Never bundle the developer checkout/cache into Pages or add it to app snapshot-tag membership.
+Use Python 3.11+ and standalone developer CLIs through local wrappers and target-owned
+`config/style.json`, with absolute `RGM_DEV_ROOT` or `--dev-root`. Checks acquire nothing and need
+no Gradle, private parent, copied engine, or crossrepo import. CI needs a reviewed full public dev
+revision and separate approval; configuration is not host qualification. Never bundle developer
+checkouts/caches into Pages. Run one-shots synchronously without timeout; keep commands on one line.
+On Windows, never run batch commands in a persistent terminal.
 
-The static workflow and `assemble_static_pages.py` require a reviewed clean main commit and
-tracked `.github/static-pages-cutover.json` with contract `rgm-static-pages-v1`. Check its current
-state; activation follows offline validation and owner readiness, not mere implementation. The artifact allowlist is intro/privacy plus
-explicit minimal resources; queued jobs recheck canonical main before upload and deployment.
-There is no catalog writer/version/tag route. Existing Git/retirement anchors remain immutable;
-independently required source/offer fulfilment remains separate from static publication. No marker,
-HTTP success or source tag authorizes external deletion or proves delivery/content identity.
+Follow local Git configuration and file exceptions; use `git ls-files --eol`, `git check-attr`, and
+`git diff --check`. Keep one authoring newline; no manual EOL conversions, raw-byte gates, staging
+as verification, or reformatting protected originals.
+
+## Machine-Local And Private Material
+
+Owner-reviewed inputs retain their rights contracts, not approval for new imports/promotion.
+Keep private/Title data, raw installations, player/operational saves/captures, credentials, keys,
+machine/vault/device paths/state, and account/release records outside public Git/CI and Pages.
+Never upload private material to third parties or pass secrets through the model. Failure artifacts
+may contain text, memory values, and coordinates, not framebuffer images. No vault-capable public runners.
