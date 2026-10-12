@@ -56,6 +56,9 @@ class StaticPagesAssemblyTest(unittest.TestCase):
     def test_stages_exactly_intro_privacy_and_minimal_local_assets(self):
         self.write(".github/scripts/static_site_release.py", "pass\n")
         self.write(".github/scripts/rgm_site_tools/__init__.py", "")
+        self.write(".prettierrc.json", "{}\n")
+        self.write(".ruff.toml", "")
+        self.write("config/style.json", "{}\n")
         self.commit_changes()
         self.assertEqual(4, ASSEMBLER.assemble(self.site, self.commit, self.output))
         self.assertEqual(
@@ -74,7 +77,13 @@ class StaticPagesAssemblyTest(unittest.TestCase):
         self.assertFalse(self.output.exists())
 
     def test_undeclared_resources_are_rejected_without_removal(self):
-        for name in ("extra/metadata.json", "other/keys.json"):
+        for name in (
+            "extra/metadata.json",
+            "other/keys.json",
+            "config/private.json",
+            ".prettierrc.json.backup",
+            ".ruff.toml.backup",
+        ):
             with self.subTest(path=name):
                 self.write(name, "{}")
                 self.commit_changes()

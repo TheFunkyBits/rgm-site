@@ -22,6 +22,7 @@ from urllib.parse import urlsplit
 REQUIRED_FILES = frozenset({"index.html", "privacy/index.html", "assets/styles.css", ".nojekyll"})
 OPTIONAL_FILES = frozenset({"assets/app-icon.png", "assets/favicon.ico"})
 METADATA_ROOTS = frozenset({".git", ".github", ".gitattributes", ".gitignore", "AGENTS.md", "README.md"})
+METADATA_FILES = frozenset({".prettierrc.json", ".ruff.toml", "config/style.json"})
 CUTOVER_MARKER = ".github/static-pages-cutover.json"
 CUTOVER_CONTRACT = "rgm-static-pages-v1"
 COMMIT = re.compile(r"[0-9a-f]{40}\Z")
@@ -69,7 +70,7 @@ def artifact_path(value: str) -> bool:
         or any(part in ("", ".", "..") for part in value.split("/"))
     ):
         raise PagesAssemblyError("Unsafe static site path")
-    if value.split("/")[0] in METADATA_ROOTS:
+    if value.split("/")[0] in METADATA_ROOTS or value in METADATA_FILES:
         return False
     if value not in REQUIRED_FILES | OPTIONAL_FILES:
         raise PagesAssemblyError("Site contains material outside the intro/privacy artifact")
