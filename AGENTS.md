@@ -31,6 +31,15 @@ its own approval. A marker, HTTP success, or source tag is neither a passed chec
 identity. Preserve protected refs and independent source/offer custody; tags do not authorize external
 deletion. Static publication creates no catalog/app snapshot tags or release authority for another class.
 
+## Editing Worktrees
+
+Ordinary AI source, documentation and configuration edits require an owned registered linked
+worktree and a unique feature branch. Canonical checkouts are read-only except for an explicitly
+authorized serialized integration/delivery owner using this site's existing guarded route.
+Read-only research needs no worktree; site editing needs no Android or runtime bootstrap.
+Retain applicable Git/registration and publication approvals, private control ownership and
+original custody; worktrees are not a sandbox or permission to overwrite another owner.
+
 ## Verification Timing
 
 Finish all authorized edits across affected repositories before any build/test, including configuration,
