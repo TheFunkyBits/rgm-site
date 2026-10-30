@@ -23,7 +23,8 @@ transaction before replay; never delete its journal to force a run. Check never 
 
 The target deployment at `https://thefunkybits.github.io/rgm-site/` contains app intro, the existing
 privacy page and explicit minimal local resources. The app packages catalog/Resolve/Profile JSON;
-GOG images and user-initiated YouTube playback are external runtime references, never website assets.
+GOG images, automatically loaded Google-hosted video thumbnails and user-initiated YouTube playback
+are external runtime references, never website assets.
 
 ## Source Delivery
 
