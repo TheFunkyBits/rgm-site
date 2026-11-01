@@ -77,7 +77,7 @@ as verification, or reformatting protected originals.
 ## Machine-Local And Private Material
 
 Owner-reviewed inputs retain their rights contracts, not approval for new imports/promotion.
-Keep private/Title data, raw installations, player/operational saves/captures, credentials, keys,
+Keep private/Title data, raw installations, user/operational saves/captures, credentials, keys,
 machine/vault/device paths/state, and account/release records outside public Git/CI and Pages.
 Never upload private material to third parties or pass secrets through the model. Failure artifacts
 may contain text, memory values, and coordinates, not framebuffer images. No vault-capable public runners.
