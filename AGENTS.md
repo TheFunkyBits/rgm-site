@@ -37,8 +37,12 @@ Ordinary AI source, documentation and configuration edits require an owned regis
 worktree and a unique feature branch. Canonical checkouts are read-only except for an explicitly
 authorized serialized integration/delivery owner using this site's existing guarded route.
 Read-only research needs no worktree; site editing needs no Android or runtime bootstrap.
-Retain applicable Git/registration and publication approvals, private control ownership and
-original custody; worktrees are not a sandbox or permission to overwrite another owner.
+When the caller has granted standing create-only session setup approval, automatically create
+the needed local feature branch and registered worktree within its approved layout without
+asking again. Validate repository/base identity and confined vacant destinations; choose fresh
+names on collision. This includes necessary local registration metadata, not other Git actions
+or runtime setup. Retain separate cleanup/delivery/publication approvals, private control ownership
+and original custody; worktrees are not a sandbox or permission to overwrite another owner.
 
 ## Verification Timing
 
